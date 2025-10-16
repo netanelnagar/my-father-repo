@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 };
 
 // TODO: add div and put here a header and footer
+//  and loading component
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -21,7 +22,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="he" dir="rtl">
-      <body className="antialiased font-heebo">
+      {/* TODO: add header and some classes here */}
+      {/* <body className="antialiased font-heebo"> */}
+      <body className="">
         {children}
       </body>
     </html>

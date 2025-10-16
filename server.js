@@ -87,9 +87,12 @@ const verifyAdmin = async (req, res, next) => {
 // Initialize database tables
 async function initDatabase() {
   try {
+    // ensure pgcrypto is available for gen_random_uuid()
+    await pool.query(`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`);
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS reviews (
-        id SERIAL PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
         content TEXT NOT NULL,
         image_filename VARCHAR(255),

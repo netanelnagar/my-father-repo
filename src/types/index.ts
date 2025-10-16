@@ -1,5 +1,6 @@
 export interface Review {
-  id: number;
+  id: string;
+  name: string;
   rating: number;
   content: string;
   image_filename?: string;
@@ -29,3 +30,6 @@ export interface AdminAuth {
   email: string;
   isAdmin: boolean;
 }
+
+
+export type AdminTabKey = 'reviews' | 'gallery' | 'customer-reviews' | 'upload-review';
