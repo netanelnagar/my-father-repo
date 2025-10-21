@@ -7,6 +7,7 @@ import { useState } from 'react';
 const navLinks = [
   { href: '/cranes/ceiling', label: 'מעלית אליט' },
   { href: '/cranes/pneumatic', label: 'מעלית פנאומטית' },
+  // TODO: make that /#reviews scroll to reviews section will be smoothly
   { href: '/#reviews', label: 'המלצות לקוחות' },
   { href: '/contact-us', label: 'צרו קשר' },
 ];
@@ -56,7 +57,7 @@ const Header = () => {
           isAdmin ?
             (
               <div className="flex items-center gap-3 pr-4">
-                <button onClick={handleLogout} className="text-sm text-[#617c89] hover:underline">Logout</button>
+                <button onClick={handleLogout} className="text-sm text-[#617c89] hover:underline">התנתק</button>
               </div>
             )
             :

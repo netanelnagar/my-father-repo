@@ -1,5 +1,7 @@
 'use client';
 
+
+// TODO: Implement footer links 
 const Footer = () => {
   return (
     <footer className="flex justify-center">

@@ -37,7 +37,7 @@ export async function DELETE(
 
     // Delete image file if exists
     if (review.rows[0].image_filename) {
-      const imagePath = path.join(process.cwd(), 'public', 'uploads', review.rows[0].image_filename);
+      const imagePath = path.join(process.cwd(), 'public', review.rows[0].image_filename);
       if (existsSync(imagePath)) {
         await unlink(imagePath);
       }

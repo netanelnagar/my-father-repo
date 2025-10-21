@@ -71,6 +71,7 @@ body {
   background: #94a3b8;
 }
 
+/* TODO : decide if needed */
 /* Form input styling for Hebrew */
 input, textarea, select {
   direction: rtl;
@@ -90,4 +91,37 @@ input[type="email"], input[type="url"] {
 .btn-hover:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Sonner: one-row layout, text | actions */
+.sonner-toast [data-sonner-toast] {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Text grows, actions stay compact at the end */
+.sonner-toast [data-content] {
+  flex: 1 1 auto !important;
+  margin: 0;
+}
+
+.sonner-toast [data-actions] {
+  flex: 0 0 auto !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-inline-start: auto;  /* push to inline-end (left in RTL) */
+  white-space: nowrap;         /* keep buttons on one line */
+}
+
+/* Prevent full-width buttons */
+.sonner-toast [data-button],
+.sonner-toast [data-cancel],
+.sonner-toast [data-cancel-button] {
+  width: auto !important;
+  white-space: nowrap;
+  margin: 0 !important;
+  flex: 0 0 auto;
 }

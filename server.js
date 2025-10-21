@@ -93,6 +93,7 @@ async function initDatabase() {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS reviews (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(255) NOT NULL,
         rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
         content TEXT NOT NULL,
         image_filename VARCHAR(255),

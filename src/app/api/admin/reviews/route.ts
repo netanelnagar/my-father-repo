@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Pool } from 'pg';
 import { verifyAdminToken } from '@/lib/auth';
+import path from 'path';
+import fs from 'fs';
+import { uploadImage } from '@/lib/uploadImages';
+
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -16,26 +20,56 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  try {
-    const { rating, content, image_filename } = await request.json();
+  let name: string | null = null;
+  let rating: number | null = null;
+  let content: string | null = null;
+  let imageFilename: string | null = null;
 
-    if (!rating || !content) {
+  try {
+    const form = await request.formData();
+
+    if (form.has('image')) {
+
+      name = (form.get('name') as string) || null;
+      rating = form.get('rating') != null ? Number(form.get('rating')) : null;
+      content = (form.get('content') as string) || null;
+      const file = form.get('image') as File | null;
+
+      if (file) {
+        imageFilename = await uploadImage(file);
+      }
+      
+    } else {
+      const body = await request.json().catch(() => ({} as any));
+      name = body?.name ?? null;
+      rating = typeof body?.rating === 'number' ? body.rating : Number(body?.rating ?? null);
+      content = body?.content ?? null;
+    }
+
+    if (!name || !rating || !content) {
       return NextResponse.json(
-        { success: false, error: 'דירוג ותוכן הם שדות חובה' },
+        { success: false, error: 'דירוג, תוכן ושם הם שדות חובה' },
         { status: 400 }
       );
     }
 
-    if (rating < 1 || rating > 5) {
+    if (Number.isNaN(rating) || rating < 1 || rating > 5) {
       return NextResponse.json(
         { success: false, error: 'דירוג חייב להיות בין 1 ל-5' },
         { status: 400 }
       );
     }
 
+    if (content.length < 10) {
+      return NextResponse.json(
+        { success: false, error: 'תוכן הביקורת חייב להיות לפחות 10 תווים' },
+        { status: 400 }
+      );
+    }
+
     const result = await pool.query(
-      'INSERT INTO reviews (rating, content, image_filename) VALUES ($1, $2, $3) RETURNING *',
-      [rating, content, image_filename || null]
+      'INSERT INTO reviews (name, rating, content, image_filename) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, rating, content, imageFilename]
     );
 
     return NextResponse.json({

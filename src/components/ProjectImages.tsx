@@ -1,38 +1,278 @@
 'use client';
 
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { FiTrash2, FiUpload, FiLoader } from 'react-icons/fi';
+import { toast } from 'sonner';
+
+import { VideoPlayer } from './VideoPlayer';
+
+type GalleryImage = { filename: string; url: string };
+
 export function ProjectImages() {
+  const [images, setImages] = useState<GalleryImage[]>([]);
+  const [videos, setVideos] = useState<GalleryImage[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [deleteMode, setDeleteMode] = useState(false); // NEW
+  const selectedList = useMemo(
+    () => Object.keys(selected).filter((k) => selected[k]),
+    [selected]
+  );
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const toggle = (filename: string) => {
+    if (deleteMode) {
+      setSelected((prev) => ({ ...prev, [filename]: !prev[filename] }));
+    }
+  };
+
+  const fetchImages = async (withoutLoading?: boolean) => {
+    if (!withoutLoading) setLoading(true);
+    try {
+      const res = await fetch('/api/admin/uploads', { credentials: 'include' });
+      const json = await res.json();
+      if (json?.success && Array.isArray(json.images) && Array.isArray(json.videos)) {
+        setImages(json.images);
+        setVideos(json.videos);
+        setSelected({});
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteSelected = async () => {
+    if (!deleteMode) {
+      // Enter delete mode
+      setDeleteMode(true);
+      return;
+    }
+
+    // Execute delete
+    if (!selectedList.length) {
+      setDeleteMode(false);
+      return;
+    }
+
+    toast(`למחוק ${selectedList.length} פריטים?`, {
+      action: {
+        label: 'אישור',
+        onClick: async () => {
+          const t = toast.loading('מוחק קבצים…');
+          try {
+            const res = await fetch('/api/admin/uploads', {
+              method: 'DELETE',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ filenames: selectedList }),
+            });
+            const json = await res.json();
+            if (json?.success) {
+              setImages((prev) => prev.filter((i) => !selectedList.includes(i.filename)));
+              setVideos((prev) => prev.filter((i) => !selectedList.includes(i.filename)));
+              setSelected({});
+              toast.success('הפריטים נמחקו בהצלחה', { id: t });
+            } else {
+              toast.error(json?.error || 'שגיאה במחיקה', { id: t });
+            }
+          } catch {
+            toast.error('שגיאה במחיקה', { id: t });
+          } finally {
+            setDeleteMode(false);
+          }
+        },
+      },
+      cancel: {
+        label: 'ביטול',
+        onClick: () => { setDeleteMode(false); setSelected({}); },
+      },
+    });
+  };
+
+  const handlePickFiles = () => fileInputRef.current?.click();
+
+  const handleFilesChosen = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const t = toast.loading('מעלה קבצים…');
+    const form = new FormData();
+    Array.from(files).forEach((f) => form.append('files', f));
+    try {
+      const res = await fetch('/api/admin/uploads', {
+        method: 'POST',
+        credentials: 'include',
+        body: form,
+      });
+      const json = await res.json();
+      if (json?.success) {
+        await fetchImages(true);
+        toast.success('הקבצים הועלו בהצלחה', { id: t });
+      } else {
+        toast.error(json?.error || 'שגיאה בהעלאה', { id: t });
+      }
+    } catch {
+      toast.error('שגיאה בהעלאה', { id: t });
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  useEffect(() => {
+    fetchImages();
+  }, []);
+
   return (
     <section className="w-full">
       <h2 className="text-[#111618] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 sm:px-6 pb-3 pt-5">
-        Project Images
+        תמונות בפרויקט
       </h2>
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-3 p-4 sm:px-6">
-        {[
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuDM8JAj-kNZApTC-HC8k_PooOTT99GoeM1SV-zGW8fjILtI282VZm_BI961_Bm8UFEhEDZLA_MSmivp84ooRiLziQuXJlyFUKqWhyJE_gY2XbaoA8beqfujUOx8KsBYDzbg78rIZ2KtQ9WKqh2DTo9rEwGzUBlDLjpj2h2iOW_1wWT_zAGASUhXngvmImSf6kqB6folRvL2TLQ5cOsmsFUVbPexjedPUJdHBVjr8sx1rkig9retbDXvlTKpkDaZL3ZV2E3tkZ5veDLA',
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuBMYSDcSSEKLyZ-OUExlu63N0BJlfiHyb-UN-DhrtD21SeLf2_gBAZ_z_ba87uTNOCRDQqvMZnzTYHoE0BoQP4K7sbjI2ptmLnvGIrbICqrnE63if7IjeTIC9vU3-ezBX1A7F0K-VRF8OyhuYVSd9ZNYPHRm3TF4G43c0nwZL0JSPSFrM_5F3KBLVVoVwYCSjopww6JVN5DheuzDABI3UwIOpw9W9LOUfVwQ40f8660eE8PMpogvK8RDnMbed7P5E3otV-sNXMHhjmb',
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuCP4vMsc15-B4TVIlUUvew2JdfaLtjOcmwjJrXQcRiwvMyU2xoeQT3It74_cXiXMNPP2cRyYIWp4KXnfA77nxGYSEKMokKHzqkveMN5BMMcOXhsNjuN8NRIY0N8Q7HiJORFuiDsZPqd-Pu8Ze5th9-Ocb1eeb9ftAPtVtpCk5yZ0A4tcsCB9_KuqZ1ArVNJs3nkvt3rOeGn2xfP0VcOUzL10YiMVe1xg2PldT3Oo6JPs53xexF4e1gK8sHWx32-WESer0YcVau12wAF',
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuCXvfgDJ4o5YqM1dPUJoRWU9TgQKpomd4S7TU6I2klyQa7ZVC12kOOT9tHuAK_OSvtMCVrv1lZH1FRNVpKd0_KtIYLFCfqAgLcjsPmZF7hmdrogh2s03TEHJIcoqAPhxytvCUkmYBLasTZhZevyvqblLSBffqajtniS-3HQT4gI_iPRRaN3V6SjGLFzgz9mNt46v8XT-uVDKfJ7dSMDOMLQYlI5N1aPq3QEXjHdKpv8qAnfNwGyzOAAeKnxckdH8EAW16LO9ZhHOPRw',
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuDZKZFIVHLCsvDVpXh5HqFpmDpqxQ_bzUqJgFl9QwWF3q724jUg4h5yUSQSYO3N7emv8BqvmlUP0WGm54mlG-uWwxAt8cj1PrC9ARwN5kOpgYScl_jl4_jyLehRx8rHr9AiExq6aKZNSYrhKVlOh77ufdUELLTtuuRmXkKhKldiLuzIoIre81WnaQHaZBFTVvPi-HYiF4h1UGclO9yQsEYO85OuWFgeiyMoREK4EqPXn_63nbMb_CqJr4DB7lTOKim21FRSGA1ypG2t',
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuC8CIL-oteIAiGqEx0DF72VPxc419JNmBQi8y4TK6LuAqr75gJnNhbIWM73Dhw4kFruKo9PYPZcnOkpSN6rh_tesp2Oa47DG5XFuJ8W_Ex2PNEOGAp-8n5FLAcLXhM1qe3z3ZJNhFOnDRuqK5vmSeQTCjTps-97vifAp98JahWTzKSyoYRm3aISHk6_rKs3TBuYQhJpEkdkS7U3ScXzJCKUO_0Sb-HfR2Wx-m6KDaircFh3BJ1f3o0cSdtTO92haFEJcLzyVvP_navE',
-        ].map((src) => (
-          <div key={src} className="flex flex-col gap-3">
-            <div className="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-lg" style={{ backgroundImage: `url("${src}")` }} />
+      <div className="grid grid-cols-3 sm:grid-cols-[repeat(auto-fit,minmax(158px,1fr))] min-h-24 gap-2 sm:gap-3 p-4 sm:px-6">
+        {loading && (
+          <div className="col-span-full flex flex-col items-center justify-center py-8">
+            <FiLoader className="w-8 h-8 text-[#13a4ec] animate-spin" />
+            <p className="mt-2 text-[#617c89] text-sm">טוען תמונות…</p>
           </div>
-        ))}
+        )}
+        {!loading && images.length === 0 && (
+          <div className="col-span-full text-[#617c89] text-sm">אין תמונות להצגה</div>
+        )}
+
+        {images.map((img) => {
+          const isSelected = !!selected[img.filename];
+          return (
+            <div key={img.filename} className="flex flex-col gap-3 max-w-[200px]">
+              <button
+                type="button"
+                className="relative w-full bg-center bg-no-repeat aspect-square bg-cover rounded-lg outline-0 focus:outline-none"
+                style={{ backgroundImage: `url("${img.url}")` }}
+                onClick={() => toggle(img.filename)}
+                aria-pressed={isSelected}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`absolute inset-0 rounded-lg ring-2`}
+                />
+
+                {isSelected && deleteMode && (
+                  <>
+                    <span className="absolute inset-0 rounded-lg overflow-hidden">
+                      <span
+                        className="absolute inset-0 bg-center bg-cover"
+                        style={{
+                          backgroundImage: `url("${img.url}")`,
+                          filter: 'blur(6px)',
+                          transform: 'scale(1.05)',
+                        }}
+                      />
+                      <span className="absolute inset-0 bg-white/30" />
+                    </span>
+                    <span className="absolute inset-0 flex items-center justify-center z-10">
+                      <FiTrash2 className="w-8 h-8 text-[#13a4ec] drop-shadow" />
+                    </span>
+                  </>
+                )}
+              </button>
+              <p className="text-[#617c89] text-xs truncate text-center">{img.filename}</p>
+            </div>
+          );
+        })}
       </div>
 
-      <div className="flex max-w-[480px] flex-wrap items-end gap-4 px-4 sm:px-6 py-3">
-        <label className="flex flex-col min-w-40 flex-1">
-          <p className="text-[#111618] text-base font-medium leading-normal pb-2">Add Notes for Special Names</p>
-          <input
-            placeholder="Enter notes"
-            className="form-input flex w-full min-w-0 flex-1 rounded-lg text-[#111618] focus:outline-0 focus:ring-0 border border-[#dbe2e6] bg-white focus:border-[#dbe2e6] h-14 placeholder:text-[#617c89] p-[15px] text-base font-normal leading-normal"
-          />
-        </label>
+      <h2 className="text-[#111618] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 sm:px-6 pb-3 pt-2">
+        סרטונים בפרויקט
+      </h2>
+      <div className="grid grid-cols-3 sm:grid-cols-[repeat(auto-fit,minmax(158px,1fr))] min-h-24 gap-2 sm:gap-3 p-4 sm:px-6">
+        {loading && (
+          <div className="col-span-full flex flex-col items-center justify-center py-8">
+            <FiLoader className="w-8 h-8 text-[#13a4ec] animate-spin" />
+            <p className="mt-2 text-[#617c89] text-sm">טוען סרטונים…</p>
+          </div>
+        )}
+        {!loading && videos.length === 0 && (
+          <div className="col-span-full text-[#617c89] text-sm">אין סרטונים להצגה</div>
+        )}
+
+        {videos.map((vid) => {
+          const isSelected = !!selected[vid.filename];
+          return (
+            <div key={vid.filename} className="flex flex-col gap-3 max-w-[200px]">
+              {deleteMode ? (
+                <button
+                  type="button"
+                  className="relative w-full aspect-square rounded-lg outline-0 focus:outline-none overflow-hidden"
+                  onClick={() => toggle(vid.filename)}
+                  aria-pressed={isSelected}
+                >
+                  <video
+                    className="absolute inset-0 w-full h-full object-cover rounded-lg"
+                    src={vid.url}
+                    preload="metadata"
+                    muted
+                    playsInline
+                    style={{ filter: isSelected ? 'blur(6px)' : 'none' }}
+
+                  />
+                  <span
+                    aria-hidden="true"
+                    className={`absolute inset-0 rounded-lg ring-2 ${isSelected ? 'ring-[#13a4ec]' : 'ring-transparent'}`}
+                  />
+
+                  {isSelected && (
+                    <>
+                      <span className="absolute inset-0 rounded-lg bg-white/30" />
+                      <span className="absolute inset-0 flex items-center justify-center z-10">
+                        <FiTrash2 className="w-8 h-8 text-[#13a4ec] drop-shadow" />
+                      </span>
+                    </>
+                  )}
+                </button>
+              ) : (
+                <div className="relative w-full aspect-square rounded-lg overflow-hidden">
+                  <VideoPlayer src={vid.url} />
+                </div>
+              )}
+              <p className="text-[#617c89] text-xs truncate text-center">{vid.filename}</p>
+            </div>
+          );
+        })}
       </div>
-      <div className="flex px-4 sm:px-6 py-3 justify-end">
-        <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#f0f3f4] text-[#111618] text-sm font-bold leading-normal tracking-[0.015em]">
-          <span className="truncate">Delete Selected Images</span>
+
+      <div className="px-4 sm:px-6 py-3">
+        <div className="rounded-lg border border-[#dbe2e6] bg-[#f8fbfc] p-3">
+          <p className="text-[#111618] text-base font-medium leading-normal pb-1">הערות למנהל</p>
+          <ul className="text-[#617c89] text-sm list-disc ps-5 space-y-1">
+            <li>שם הקובץ favicon.ico יופיע אוטומטית בלשונית התמונות.</li>
+            <li>ניתן להעלות תמונות (PNG/JPG/WEBP/GIF/SVG/ICO) או וידאו (MP4/MOV/WEBM/MKV).</li>
+            <li>מחיקה תסיר את הקבצים לצמיתות מתיקיית public/.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="flex px-4 sm:px-6 py-3 gap-3 justify-start">
+        <button
+          onClick={handlePickFiles}
+          className="flex min-w-[120px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#13a4ec] text-white text-sm font-bold leading-normal tracking-[0.015em]"
+        >
+          <span className="truncate flex items-center gap-2">
+            <FiUpload className="w-4 h-4" />
+            העלאת קבצים
+          </span>
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,video/*"
+          multiple
+          className="hidden"
+          onChange={handleFilesChosen}
+        />
+        <button
+          onClick={deleteSelected}
+          className="flex min-w-[160px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#f0f3f4] text-[#111618] text-sm font-bold leading-normal tracking-[0.015em]"
+        >
+          <span className="truncate">
+            {deleteMode ? `מחק ${selectedList.length} פריטים נבחרים` : 'בחר פריטים למחיקה'}
+          </span>
         </button>
       </div>
     </section>

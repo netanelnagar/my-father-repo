@@ -8,9 +8,9 @@ type Props = {
 };
 
 const tabs: { key: AdminTabKey; label: string }[] = [
-  { key: 'reviews', label: 'Reviews' },
-  { key: 'upload-review', label: 'Upload Review' },
-  { key: 'gallery', label: 'Image Gallery' },
+  { key: 'reviews', label: 'ביקורות' },
+  { key: 'upload-review', label: 'העלאת ביקורת' },
+  { key: 'gallery', label: 'גלריית תמונות' },
 ];
 
 export function TabsNav({ activeTab, onChange }: Props) {

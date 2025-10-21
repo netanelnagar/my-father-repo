@@ -1,9 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import ReviewCard from '@/components/ReviewCard';
 import { Review } from '@/types';
 import { fakeReviews } from '@/data/fakeReviews';
@@ -29,7 +26,7 @@ export default function HomePage() {
       setLoading(false);
     }
   };
-  // TODO: replace all texts and images
+  // TODO: replace images, icons and put correct styles of reviews section
   return (
     <div className="px-4 sm:px-6 lg:px-10 flex flex-1 justify-center py-5">
       <div className="layout-content-container flex flex-col w-full max-w-[960px]">

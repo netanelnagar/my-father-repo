@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
   title: "מנופי רמון - מנופים איכותיים לחיי השניך",
@@ -24,9 +25,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="he" dir="rtl">
-      {/* TODO: add header and some classes here */}
-      {/* <body className="antialiased font-heebo"> */}
-      <body className="">
+      {/* TODO: add header and some classes here and check if need to fixed the header */}
+      
+      <body>
         <div className="relative flex h-auto min-h-screen w-full flex-col bg-white group/design-root overflow-x-hidden" style={{ fontFamily: 'Inter, "Noto Sans", sans-serif' }}>
           <div className="flex h-dvh grow flex-col">
             <Header />
@@ -34,6 +35,19 @@ export default function RootLayout({
             <Footer />
           </div>
         </div>
+        <Toaster
+          className="sonner-toast"
+          position="top-center"
+          toastOptions={{
+            style: {
+              background: '#fff',
+              color: '#111618',
+              border: '1px solid #dbe2e6',
+              borderRadius: 8,
+              fontFamily: 'Heebo, sans-serif',
+            },
+          }}
+        />
       </body>
     </html>
   );

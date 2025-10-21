@@ -7,6 +7,13 @@ export interface Review {
   created_at: string;
 }
 
+export type ReviewForm = {
+  name: string;
+  rating: number;
+  content: string;
+  image: FileList | null;
+};
+
 export interface ApiResponse<T = any> {
   success: boolean;
   message?: string;
