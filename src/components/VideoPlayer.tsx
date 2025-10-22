@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { FiLoader } from 'react-icons/fi';
-import { MediaPlayer, MediaProvider } from '@vidstack/react';
+import { MediaPlayer, MediaProvider, Poster } from '@vidstack/react';
 import { defaultLayoutIcons, DefaultVideoLayout } from '@vidstack/react/player/layouts/default';
 import '@vidstack/react/player/styles/default/theme.css';
 import '@vidstack/react/player/styles/default/layouts/video.css';
@@ -15,24 +15,28 @@ function VideoPlayerFallback() {
   );
 }
 
-function VideoPlayerInternal({ src, blur }: { src: string; blur: boolean }) {
+function VideoPlayerInternal({ src, blur, poster }: { src: string; blur: boolean; poster: string }) {
   return (
     <MediaPlayer
       src={src}
       className="absolute inset-0 w-full h-full object-cover rounded-lg"
       playsInline
       preload="metadata"
+      dir='ltr'
+      load="visible" 
+      posterLoad="visible"
     >
-        <DefaultVideoLayout thumbnails="https://files.vidstack.io/sprite-fight/thumbnails.vtt" icons={defaultLayoutIcons} />
+      <Poster src={poster} className="vds-poster" />
+      <DefaultVideoLayout thumbnails="https://files.vidstack.io/sprite-fight/thumbnails.vtt" icons={defaultLayoutIcons} />
       <MediaProvider />
     </MediaPlayer>
   );
 }
 
-export function VideoPlayer({ src, blur = false }: { src: string; blur?: boolean }) {
+export function VideoPlayer({ src, blur = false, poster = '' }: { src: string; blur?: boolean; poster?: string }) {
   return (
     <Suspense fallback={<VideoPlayerFallback />}>
-      <VideoPlayerInternal src={src} blur={blur} />
+      <VideoPlayerInternal src={src} blur={blur} poster={poster} />
     </Suspense>
   );
 }

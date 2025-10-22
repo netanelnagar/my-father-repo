@@ -67,9 +67,10 @@ export default function HomePage() {
               <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.1)_0%,rgba(0,0,0,0.4)_100%)]" />
               <motion.div
                 className="relative z-10 flex flex-col gap-3 justify-center items-center"
-                initial={{ opacity: 0, y: 100 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                viewport={{ once: true }}
               >
                 <h1 className="relative z-10 text-white text-3xl sm:text-5xl font-black leading-tight tracking-[-0.02em] text-center">
                   בטיחות ואיכות חיים בבית שלך!
@@ -96,9 +97,9 @@ export default function HomePage() {
               />
             </div>
             <motion.div
-              initial={{ opacity: 0, y: 80 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
               viewport={{ once: true, amount: 0.4 }}
             >
               <p className="text-[#111618] text-base font-medium leading-normal">מעלית אליט</p>
@@ -115,9 +116,9 @@ export default function HomePage() {
               />
             </div>
             <motion.div
-              initial={{ opacity: 0, y: 80 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
               viewport={{ once: true, amount: 0.4 }}
             >
               <p className="text-[#111618] text-base font-medium leading-normal">מעלית פנאומטית</p>
@@ -242,9 +243,9 @@ export default function HomePage() {
           </div>
         </div>
         <motion.div
-          initial={{ opacity: 0, y: 80 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
           viewport={{ once: true, amount: 0.4 }}
         >
           <div className="flex flex-col justify-end gap-6 px-4 py-10 sm:gap-8 sm:px-10 sm:py-20">
