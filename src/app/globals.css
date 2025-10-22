@@ -73,12 +73,15 @@ body {
 
 /* TODO : decide if needed */
 /* Form input styling for Hebrew */
-input, textarea, select {
+input,
+textarea,
+select {
   direction: rtl;
   text-align: right;
 }
 
-input[type="email"], input[type="url"] {
+input[type="email"],
+input[type="url"] {
   direction: ltr;
   text-align: left;
 }
@@ -112,8 +115,10 @@ input[type="email"], input[type="url"] {
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  margin-inline-start: auto;  /* push to inline-end (left in RTL) */
-  white-space: nowrap;         /* keep buttons on one line */
+  margin-inline-start: auto;
+  /* push to inline-end (left in RTL) */
+  white-space: nowrap;
+  /* keep buttons on one line */
 }
 
 /* Prevent full-width buttons */
@@ -124,4 +129,23 @@ input[type="email"], input[type="url"] {
   white-space: nowrap;
   margin: 0 !important;
   flex: 0 0 auto;
+}
+
+@keyframes reviewsMarquee {
+  0% {
+    transform: translateX(0%);
+  }
+
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.reviews-marquee {
+  animation: reviewsMarquee 20s linear infinite;
+  will-change: transform;
+}
+
+.reviews-marquee.paused {
+  animation-play-state: paused;
 }

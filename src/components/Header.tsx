@@ -2,12 +2,11 @@
 
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { MouseEvent, useState } from 'react';
 
 const navLinks = [
   { href: '/cranes/ceiling', label: 'מעלית אליט' },
   { href: '/cranes/pneumatic', label: 'מעלית פנאומטית' },
-  // TODO: make that /#reviews scroll to reviews section will be smoothly
   { href: '/#reviews', label: 'המלצות לקוחות' },
   { href: '/contact-us', label: 'צרו קשר' },
 ];
@@ -18,6 +17,30 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const closeMenu = () => setIsMenuOpen(false);
+
+  const handleNavClick = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (!href.startsWith('/#')) {
+      closeMenu();
+      return;
+    }
+
+    if (window.location.pathname !== '/') {
+      closeMenu();
+      router.push(href);
+      return;
+    }
+
+    event.preventDefault();
+    const targetId = href.split('#')[1];
+    const target = targetId ? document.getElementById(targetId) : null;
+
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.history.replaceState(null, '', href);
+    }
+
+    closeMenu();
+  };
 
   const handleLogout = async () => {
     try {
@@ -30,7 +53,9 @@ const Header = () => {
       console.error('Logout error:', error);
     }
   };
+
   const isAdmin = pathname?.startsWith('/admin/dashboard');
+  // TODO: if is no reviews delete the reviews link from navLinks, replace all icons
   return (
     <>
       <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#f0f3f4] px-4 sm:px-6 lg:px-10 py-3 relative z-50 bg-white">
@@ -67,7 +92,12 @@ const Header = () => {
               <div className="flex flex-1 justify-end gap-3 lg:me-10 sm:gap-8">
                 <nav className="hidden md:flex items-center gap-6 lg:gap-9">
                   {navLinks.map((l) => (
-                    <Link key={l.href} href={l.href} className="text-[#111618] text-sm font-medium leading-normal">
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      className="text-[#111618] text-sm font-medium leading-normal"
+                      onClick={(event) => handleNavClick(event, l.href)}
+                    >
                       {l.label}
                     </Link>
                   ))}
@@ -110,7 +140,7 @@ const Header = () => {
               key={l.href}
               href={l.href}
               className={`text-[#111618] text-sm font-medium leading-normal ${i < navLinks.length - 1 ? 'border-b border-solid border-b-[#f0f3f4] pb-3' : ''}`}
-              onClick={closeMenu}
+              onClick={(event) => handleNavClick(event, l.href)}
             >
               {l.label}
             </Link>

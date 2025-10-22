@@ -190,6 +190,8 @@ export default function HomePage() {
               <p className="text-[#617c89] text-sm text-center">אין המלצות להצגה כעת.</p>
             ) : (
               <div
+              // TODO: check if mobile works well
+                id='reviews'
                 className={`flex gap-6 reviews-marquee${isMarqueeHovered ? ' paused' : ''}`}
                 onMouseEnter={() => setIsMarqueeHovered(true)}
                 onMouseLeave={() => setIsMarqueeHovered(false)}
@@ -265,34 +267,6 @@ export default function HomePage() {
           </div>
         </motion.div>
       </div>
-      <style jsx global>{`
-        @keyframes reviewsMarquee {
-          0% {
-            transform: translateX(0%);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-        .reviews-marquee {
-          animation: reviewsMarquee 45s linear infinite;
-          will-change: transform;
-        }
-        .reviews-marquee.paused {
-          animation-play-state: paused;
-        }
-         @keyframes skeletonShimmer {
-           0% {
-             background-position: 200% 0;
-           }
-           100% {
-             background-position: -200% 0;
-           }
-         }
-         .animate-pulse {
-           animation: skeletonShimmer 1.5s infinite linear;
-         }
-       `}</style>
      </div>
    );
  }
