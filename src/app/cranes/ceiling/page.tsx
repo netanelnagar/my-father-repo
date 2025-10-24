@@ -86,7 +86,7 @@ export default function CeilingCranePage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
               viewport={{ once: true }}
             >
               <p className="text-[#617c89] text-sm font-normal leading-normal">קיבולת הרמה</p>
@@ -97,7 +97,7 @@ export default function CeilingCranePage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
               viewport={{ once: true }}
             >
               <p className="text-[#617c89] text-sm font-normal leading-normal">מידות</p>
@@ -130,7 +130,7 @@ export default function CeilingCranePage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
               viewport={{ once: true }}
             >
               <p className="text-[#617c89] text-sm font-normal leading-normal">בקרה</p>

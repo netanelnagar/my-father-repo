@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { PiShieldCheckFill, PiUsersThreeFill, PiClockFill, PiStarFill } from 'react-icons/pi';
 import Image from 'next/image';
 import Link from 'next/link';
+import '@vidstack/react/player/styles/default/theme.css';
+import '@vidstack/react/player/styles/default/layouts/video.css';
 
 import { fakeReviews } from '@/data/fakeReviews';
 import { Review } from '@/types';
