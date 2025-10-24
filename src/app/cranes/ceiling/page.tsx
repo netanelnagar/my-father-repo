@@ -212,7 +212,8 @@ export default function CeilingCranePage() {
               onLoadedMetadata={() => setVideoLoaded(true)}
             >
               <Poster src="/poster-ceiling.png" className="vds-poster" />
-              <DefaultVideoLayout thumbnails="https://files.vidstack.io/sprite-fight/thumbnails.vtt" icons={defaultLayoutIcons} />
+              {/* TODO: decide if add thumbnails */}
+              <DefaultVideoLayout icons={defaultLayoutIcons} />
               <MediaProvider />
             </MediaPlayer>
           </div>
