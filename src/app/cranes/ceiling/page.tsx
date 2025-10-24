@@ -198,7 +198,7 @@ export default function CeilingCranePage() {
 
         <section className="p-4" about="video-section">
           <div className="relative w-full overflow-hidden rounded-lg aspect-[16/9]">
-            {!false && (
+            {!videoLoaded && (
               <div className="absolute inset-0 bg-[#d6dde1] animate-pulse" />
             )}
             <MediaPlayer
