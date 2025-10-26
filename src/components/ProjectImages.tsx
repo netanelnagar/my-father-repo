@@ -3,6 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FiTrash2, FiUpload, FiLoader } from 'react-icons/fi';
 import { toast } from 'sonner';
+import { MediaPlayer, MediaProvider } from '@vidstack/react';
+import { defaultLayoutIcons, DefaultVideoLayout } from '@vidstack/react/player/layouts/default';
+import '@vidstack/react/player/styles/default/theme.css';
+import '@vidstack/react/player/styles/default/layouts/video.css';
 
 import { VideoPlayer } from './VideoPlayer';
 
@@ -177,7 +181,7 @@ export function ProjectImages() {
           );
         })}
       </div>
-
+      {/* TODO: add skeltons  */}
       <h2 className="text-[#111618] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 sm:px-6 pb-3 pt-2">
         סרטונים בפרויקט
       </h2>
@@ -228,7 +232,21 @@ export function ProjectImages() {
                 </button>
               ) : (
                 <div className="relative w-full aspect-square rounded-lg overflow-hidden">
-                  <VideoPlayer src={vid.url} />
+                  <VideoPlayer 
+                    src={vid.url} 
+                    classes="w-full aspect-square rounded-lg overflow-hidden"
+                  />
+                  {/* <MediaPlayer
+                    className="absolute inset-0 w-full h-full object-cover rounded-lg"
+                    src={vid.url}
+                    playsInline
+                    preload="metadata"
+                    dir='ltr'
+                    load="visible"
+                    posterLoad="visible"
+                  >
+                    <MediaProvider />
+                  </MediaPlayer> */}
                 </div>
               )}
               <p className="text-[#617c89] text-xs truncate text-center">{vid.filename}</p>

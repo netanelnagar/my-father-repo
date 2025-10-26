@@ -15,10 +15,7 @@ import { motion } from 'motion/react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Fragment, useState } from 'react';
-import { MediaPlayer, MediaProvider, Poster } from '@vidstack/react';
-import { defaultLayoutIcons, DefaultVideoLayout } from '@vidstack/react/player/layouts/default';
-import '@vidstack/react/player/styles/default/theme.css';
-import '@vidstack/react/player/styles/default/layouts/video.css';
+import { VideoPlayer } from '@/components/VideoPlayer';
 
 interface GalleryImage {
   name: 'primary' | 'side' | 'cabin';
@@ -156,15 +153,14 @@ const galleryImages: GalleryImage[] = [
 
 const specificationEntries = Object.entries(specifications);
 
-// TODO: split the sections into components and reuse its in other crane pages
+// TODO: split the sections into components and reuse its in other crane pages.
+// use https://motion.dev/docs/react-motion-component#server-side-rendering to animations
 export default function PneumaticCranePage() {
   const [imageLoaded, setImageLoaded] = useState<Record<'primary' | 'side' | 'cabin', boolean>>({
     primary: false,
     side: false,
     cabin: false,
   });
-  const [videoLoaded, setVideoLoaded] = useState(false);
-
 
   return (
     <div className="px-4 sm:px-6 lg:px-10 flex flex-1 justify-center py-5">
@@ -203,26 +199,11 @@ export default function PneumaticCranePage() {
         </section>
 
         <section className="p-4" about="video-section">
-          <div className="relative w-full overflow-hidden rounded-lg aspect-[16/9]">
-            {!videoLoaded && (
-              <div className="absolute inset-0 bg-[#d6dde1] animate-pulse" />
-            )}
-            <MediaPlayer
+            <VideoPlayer
               src="/1761047054525.mov"
-              className="h-full w-full rounded-lg"
-              playsInline
-              preload="metadata"
-              dir="ltr"
-              load="visible"
-              posterLoad="visible"
-              onLoadedMetadata={() => setVideoLoaded(true)}
-            >
-              <Poster src="/poster-pneumatic.png" className="vds-poster" />
-              {/* TODO: decide if add thumbnails */}
-              <DefaultVideoLayout icons={defaultLayoutIcons} />
-              <MediaProvider />
-            </MediaPlayer>
-          </div>
+              classes="relative w-full overflow-hidden rounded-lg aspect-[16/9]"
+              poster="/poster-pneumatic.png"
+            />
         </section>
 
         <h2 className="text-[#111618] text-[20px] sm:text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">

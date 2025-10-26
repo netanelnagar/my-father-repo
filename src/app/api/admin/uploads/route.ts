@@ -98,7 +98,7 @@ export async function DELETE(request: NextRequest) {
             );
             deleted.push(safe);
           } catch {
-            //TODO: ignore missing
+            console.error('Delete upload error:', name);
           }
         }
         return NextResponse.json({ success: true, deleted });
