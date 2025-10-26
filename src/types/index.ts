@@ -40,3 +40,10 @@ export interface AdminAuth {
 
 
 export type AdminTabKey = 'reviews' | 'gallery' | 'customer-reviews' | 'upload-review';
+
+export interface GalleryImage {
+  name: 'primary' | 'side' | 'cabin';
+  classes: string;
+  src: string;
+  alt: string;
+}
