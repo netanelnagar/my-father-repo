@@ -18,8 +18,7 @@ export const metadata: Metadata = {
   }
 };
 
-// TODO: add loading component
-//  check if need to add some middlewares for protection apis
+// TODO: check if need to add some middlewares for protection apis
 export default function RootLayout({
   children,
 }: Readonly<{

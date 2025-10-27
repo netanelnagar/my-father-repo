@@ -1,63 +1,76 @@
 'use client';
 
-import { fakeReviews } from '@/data/fakeReviews';
-import { useEffect, useState } from 'react';
+import { SetStateAction, useEffect, Dispatch } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FiLoader } from 'react-icons/fi';
 import { toast } from 'sonner';
+
+import { fetchReviews } from '@/lib/queries/reviews';
 import { Review } from '@/types';
 
 const tablesHeaders = ['שם', 'ביקורת', 'דירוג', 'פעולות'];
 
 type ReviewsTableProps = {
-  flagForReloadReviews?: boolean;
+  flagForAddedOrDeletedReview?: boolean;
+  setFlagForAddedOrDeletedReview: Dispatch<SetStateAction<boolean>>;
 };
 
-export function ReviewsTable({ flagForReloadReviews }: ReviewsTableProps) {
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
+export function ReviewsTable({ flagForAddedOrDeletedReview, setFlagForAddedOrDeletedReview }: ReviewsTableProps) {
+  const queryClient = useQueryClient();
 
+  const {
+    data: reviews = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery<Review[]>({
+    queryKey: ['reviews'],
+    queryFn: fetchReviews,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const fetchReviews = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/reviews');
-      if (!response.ok) {
-        setReviews(fakeReviews);
-        return;
-      }
+  const deleteReviewMutation = useMutation({
+    mutationFn: async (reviewId: string) => {
+      const response = await fetch(`/api/admin/reviews/${reviewId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
       const data = await response.json();
-      if (data?.success && Array.isArray(data.reviews)) {
-        setReviews(data.reviews);
-      }
-    } catch (error) {
-      console.error('Error fetching reviews:', error);
-      setReviews([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleDeleteReview = async (reviewId: string, name: string) => {
+      if (!response.ok || !data.success) {
+        throw new Error(data?.error ?? 'Failed to delete review');
+      }
+    },
+  });
+
+  const handleDeleteReview = (reviewId: string, name: string) => {
     toast(`האם אתה בטוח שברצונך למחוק את הביקורת של ${name}?`, {
       action: {
         label: 'מחק',
-        onClick: async () => {
-          const t = toast.loading(`מוחק ביקורת, ${name}…`);
-          try {
-            const response = await fetch(`/api/admin/reviews/${reviewId}`, {
-              method: 'DELETE',
-              credentials: 'include',
-            });
-            const data = await response.json();
-            if (data.success) {
-              setReviews((prev) => prev.filter((r) => r.id !== reviewId));
-              toast.success('הביקורת נמחקה', { id: t });
-            } else {
-              toast.error(`שגיאה במחיקה: ${data.error}`, { id: t });
-            }
-          } catch {
-            toast.error('שגיאה במחיקת הביקורת', { id: t });
-          }
+        onClick: () => {
+          const loadingToastId = toast.loading(`מוחק ביקורת, ${name}…`);
+
+          deleteReviewMutation.mutate(reviewId, {
+            onSuccess: () => {
+              queryClient.setQueryData<Review[]>(['reviews'], (current) =>
+                current?.filter((review) => review.id !== reviewId) ?? [],
+              );
+              toast.success('הביקורת נמחקה', { id: loadingToastId });
+              setFlagForAddedOrDeletedReview((prev) => !prev);
+            },
+            onError: (error) => {
+              toast.error(
+                `שגיאה במחיקה: ${
+                  error instanceof Error ? error.message : 'לא ידועה'
+                }`,
+                { id: loadingToastId },
+              );
+            },
+            onSettled: () => {
+              queryClient.invalidateQueries({ queryKey: ['reviews'] });
+            },
+          });
         },
       },
       cancel: {
@@ -70,12 +83,8 @@ export function ReviewsTable({ flagForReloadReviews }: ReviewsTableProps) {
   };
 
   useEffect(() => {
-    fetchReviews();
-  }, []);
-
-  useEffect(() => {
-      fetchReviews();
-  }, [flagForReloadReviews]);
+    refetch();
+  }, [flagForAddedOrDeletedReview, refetch]);
 
   return (
     <section className="w-full">
@@ -83,59 +92,70 @@ export function ReviewsTable({ flagForReloadReviews }: ReviewsTableProps) {
         כל הביקורות
       </h2>
       <div className="px-4 sm:px-6 py-3">
-        <div className="flex overflow-x-auto  rounded-lg border border-[#dbe2e6] bg-white">
-          <table className="flex-1 ">
+        <div className="flex overflow-x-auto rounded-lg border border-[#dbe2e6] bg-white">
+          <table className="flex-1">
             <thead>
               <tr className="bg-white">
-                {tablesHeaders.map((h, index) => (
-                  <th key={h} className={" px-4 py-3 text-right text-[#111618] text-sm font-medium leading-normal" + (index <= 1 ? " w-[400px]" : " w-60")}>
-                    {h}
+                {tablesHeaders.map((header, index) => (
+                  <th
+                    key={header}
+                    className={
+                      'px-4 py-3 text-right text-[#111618] text-sm font-medium leading-normal' +
+                      (index <= 1 ? ' w-[400px]' : ' w-60')
+                    }
+                  >
+                    {header}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody >
-              {loading ?
-                (
-                  <tr className="border-t border-t-[#dbe2e6]">
-                    <td colSpan={4} className="px-4 py-6">
-                      <div className="flex items-center justify-center gap-2">
-                        <FiLoader className="w-5 h-5 text-[#13a4ec] animate-spin" />
-                        <span className="text-[#617c89] text-sm">טוען ביקורות…</span>
-                      </div>
+            <tbody>
+              {isLoading ? (
+                <tr className="border-t border-t-[#dbe2e6]">
+                  <td colSpan={4} className="px-4 py-6">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <div className="h-5 w-5 loader" />
+                      <span className="text-sm text-[#617c89]">טוען ביקורות…</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : isError ? (
+                <tr className="border-t border-t-[#dbe2e6]">
+                  <td colSpan={4} className="px-4 py-6 text-sm text-[#617c89] text-center">
+                    שגיאה בטעינת הביקורות.
+                  </td>
+                </tr>
+              ) : reviews.length === 0 ? (
+                <tr className="border-t border-t-[#dbe2e6]">
+                  <td colSpan={4} className="px-4 py-6 text-sm text-[#617c89] text-center">
+                    אין ביקורות להצגה.
+                  </td>
+                </tr>
+              ) : (
+                reviews.map((review) => (
+                  <tr key={review.id} className="border-t border-t-[#dbe2e6]">
+                    <td className="h-[72px] w-[400px] px-4 py-2 text-sm font-normal leading-normal text-[#111618]">
+                      {review.name || 'Anonymous'}
+                    </td>
+                    <td className="h-[72px] w-[400px] px-4 py-2 text-sm font-normal leading-normal text-[#617c89]">
+                      {review.content}
+                    </td>
+                    <td className="h-[72px] w-60 px-4 py-2 text-sm font-normal leading-normal">
+                      <button className="flex h-8 w-full min-w-[84px] max-w-[480px] items-center justify-center rounded-lg bg-[#f0f3f4] px-4 text-sm font-medium leading-normal text-[#111618]">
+                        <span className="truncate">{review.rating} כוכבים</span>
+                      </button>
+                    </td>
+                    <td className="h-[72px] w-60 px-4 py-2 text-sm font-bold leading-normal tracking-[0.015em] text-[#617c89]">
+                      <button
+                        onClick={() => handleDeleteReview(review.id, review.name)}
+                        className="text-[#111618] hover:underline"
+                      >
+                        מחק ביקורת
+                      </button>
                     </td>
                   </tr>
-                ) : reviews.length === 0 ?
-                  (
-                    <tr className="border-t border-t-[#dbe2e6]">
-                      <td colSpan={4} className="px-4 py-6 text-sm text-[#617c89]">
-                        No reviews yet.
-                      </td>
-                    </tr>
-                  ) :
-                  reviews.map((r) => (
-                    <tr key={r.id} className="border-t border-t-[#dbe2e6]">
-                      <td className=" h-[72px] px-4 py-2 w-[400px] text-[#111618] text-sm font-normal leading-normal">
-                        {r.name || 'Anonymous'}
-                      </td>
-                      <td className=" h-[72px] px-4 py-2 w-[400px] text-[#617c89] text-sm font-normal leading-normal">
-                        {r.content}
-                      </td>
-                      <td className=" h-[72px] px-4 py-2 w-60 text-sm font-normal leading-normal">
-                        <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-[#f0f3f4] text-[#111618] text-sm font-medium leading-normal w-full">
-                          <span className="truncate">{r.rating} כוכבים</span>
-                        </button>
-                      </td>
-                      <td className=" h-[72px] px-4 py-2 w-60 text-[#617c89] text-sm font-bold leading-normal tracking-[0.015em]">
-                        <button onClick={() => { handleDeleteReview(r.id, r.name) }} className="text-[#111618] hover:underline">
-                          מחק ביקורת
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-              }
-
-
+                ))
+              )}
             </tbody>
           </table>
         </div>

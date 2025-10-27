@@ -14,8 +14,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTabKey>('reviews');
-  // TODO: Need to do it works with images component too
-  const [flagForReloadReviews, setFlagForReloadReviews] = useState<boolean>(false);
+  const [flagForAddedOrDeletedReview, setFlagForAddedOrDeletedReview] = useState<boolean>(false);
 
   const router = useRouter();
 
@@ -40,19 +39,13 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   };
-  
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <span key={i} className={`text-xl ${i < rating ? 'text-yellow-400' : 'text-gray-300'}`}>
-        ⭐
-      </span>
-    ));
-  };
 
   if (loading) {
-    <div className="flex flex-1 items-center justify-center h-full">
-      <p className="text-[#111618] text-base font-medium leading-normal">טוען…</p>
-    </div>;
+    return (
+      <div className="flex flex-1 items-center justify-center h-full">
+        <p className="loader text-[#13a4ec]"></p>
+      </div>
+    );
   }
 
   if (!authenticated) {
@@ -66,15 +59,15 @@ export default function AdminDashboard() {
       <div className="px-4 sm:px-6 lg:px-10 flex flex-1 justify-center py-5">
         <div className="layout-content-container flex flex-col w-full max-w-[960px]">
           <div className={activeTab === 'reviews' ? 'block' : 'hidden'}>
-            <ReviewsTable flagForReloadReviews={flagForReloadReviews} />
+            <ReviewsTable flagForAddedOrDeletedReview={flagForAddedOrDeletedReview} setFlagForAddedOrDeletedReview={setFlagForAddedOrDeletedReview} />
           </div>
 
           <div className={activeTab === 'gallery' ? 'block' : 'hidden'}>
-            <ProjectImages />
+            <ProjectImages flagForAddedOrDeletedReview={flagForAddedOrDeletedReview} />
           </div>
 
           <div className={activeTab === 'upload-review' ? 'block' : 'hidden'}>
-            <UploadReview setFlagForReloadReviews={setFlagForReloadReviews} />
+            <UploadReview setFlagForAddedOrDeletedReview={setFlagForAddedOrDeletedReview} />
           </div>
         </div>
       </div>

@@ -1,129 +1,174 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FiTrash2, FiUpload, FiLoader } from 'react-icons/fi';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { FiTrash2, FiUpload } from 'react-icons/fi';
 import { toast } from 'sonner';
-import { MediaPlayer, MediaProvider } from '@vidstack/react';
-import { defaultLayoutIcons, DefaultVideoLayout } from '@vidstack/react/player/layouts/default';
-import '@vidstack/react/player/styles/default/theme.css';
-import '@vidstack/react/player/styles/default/layouts/video.css';
 
 import { VideoPlayer } from './VideoPlayer';
+import { fetchUploads, ProjectMediaFile, UploadsResponse } from '@/lib/queries/uploads';
 
-type GalleryImage = { filename: string; url: string };
+type ProjectImagesProps = {
+  flagForAddedOrDeletedReview?: boolean;
+};
 
-export function ProjectImages() {
-  const [images, setImages] = useState<GalleryImage[]>([]);
-  const [videos, setVideos] = useState<GalleryImage[]>([]);
-  const [loading, setLoading] = useState(false);
+export function ProjectImages({ flagForAddedOrDeletedReview }: ProjectImagesProps) {
+  const queryClient = useQueryClient();
+  const { data, isLoading, isFetching, refetch } = useQuery<UploadsResponse>({
+    queryKey: ['admin', 'uploads'],
+    queryFn: fetchUploads,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+  });
+
+  const uploadFilesMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const res = await fetch('/api/admin/uploads', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || !json?.success) {
+        throw new Error(json?.error ?? 'Upload failed');
+      }
+
+      return json;
+    },
+  });
+
+  const deleteUploadsMutation = useMutation({
+    mutationFn: async (filenames: string[]) => {
+      const res = await fetch('/api/admin/uploads', {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filenames }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || !json?.success) {
+        throw new Error(json?.error ?? 'Delete failed');
+      }
+
+      return json;
+    },
+  });
+
   const [selected, setSelected] = useState<Record<string, boolean>>({});
-  const [deleteMode, setDeleteMode] = useState(false); // NEW
-  const selectedList = useMemo(
-    () => Object.keys(selected).filter((k) => selected[k]),
-    [selected]
-  );
+  const [deleteMode, setDeleteMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const skeletonPlaceholders = useMemo(() => Array.from({ length: 3 }), []);
+  const selectedList = useMemo(
+    () => Object.keys(selected).filter((key) => selected[key]),
+    [selected],
+  );
+
+  const images: ProjectMediaFile[] = data?.images ?? [];
+  const videos: ProjectMediaFile[] = data?.videos ?? [];
+  const loading =
+    isLoading || isFetching || uploadFilesMutation.isPending || deleteUploadsMutation.isPending;
+
   const toggle = (filename: string) => {
-    if (deleteMode) {
-      setSelected((prev) => ({ ...prev, [filename]: !prev[filename] }));
-    }
+    if (!deleteMode) return;
+    setSelected((prev) => ({ ...prev, [filename]: !prev[filename] }));
   };
 
-  const fetchImages = async (withoutLoading?: boolean) => {
-    if (!withoutLoading) setLoading(true);
-    try {
-      const res = await fetch('/api/admin/uploads', { credentials: 'include' });
-      const json = await res.json();
-      if (json?.success && Array.isArray(json.images) && Array.isArray(json.videos)) {
-        setImages(json.images);
-        setVideos(json.videos);
-        setSelected({});
-      }
-    } finally {
-      setLoading(false);
-    }
+  const handlePickFiles = () => fileInputRef.current?.click();
+
+  const handleFilesChosen = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const formData = new FormData();
+    formData.append('image', files[0]);
+
+    const toastId = toast.loading('מעלה קבצים…');
+
+    uploadFilesMutation.mutate(formData, {
+      onSuccess: () => {
+        toast.success('הקבצים הועלו בהצלחה', { id: toastId });
+        queryClient.invalidateQueries({ queryKey: ['admin', 'uploads'] });
+      },
+      onError: (error) => {
+        toast.error(
+          `שגיאה בהעלאה: ${error instanceof Error ? error.message : 'לא ידועה'}`,
+          { id: toastId },
+        );
+      },
+      onSettled: () => {
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      },
+    });
   };
 
-  const deleteSelected = async () => {
+  const deleteSelected = () => {
     if (!deleteMode) {
-      // Enter delete mode
       setDeleteMode(true);
       return;
     }
 
-    // Execute delete
     if (!selectedList.length) {
       setDeleteMode(false);
       return;
     }
 
-    toast(`למחוק ${selectedList.length} פריטים?`, {
+    const filenamesToDelete = [...selectedList];
+
+    toast(`למחוק ${filenamesToDelete.length} פריטים?`, {
       action: {
         label: 'אישור',
-        onClick: async () => {
-          const t = toast.loading('מוחק קבצים…');
-          try {
-            const res = await fetch('/api/admin/uploads', {
-              method: 'DELETE',
-              credentials: 'include',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ filenames: selectedList }),
-            });
-            const json = await res.json();
-            if (json?.success) {
-              setImages((prev) => prev.filter((i) => !selectedList.includes(i.filename)));
-              setVideos((prev) => prev.filter((i) => !selectedList.includes(i.filename)));
+        onClick: () => {
+          const toastId = toast.loading('מוחק קבצים…');
+
+          deleteUploadsMutation.mutate(filenamesToDelete, {
+            onSuccess: () => {
+              toast.success('הפריטים נמחקו בהצלחה', { id: toastId });
               setSelected({});
-              toast.success('הפריטים נמחקו בהצלחה', { id: t });
-            } else {
-              toast.error(json?.error || 'שגיאה במחיקה', { id: t });
-            }
-          } catch {
-            toast.error('שגיאה במחיקה', { id: t });
-          } finally {
-            setDeleteMode(false);
-          }
+              setDeleteMode(false);
+              queryClient.invalidateQueries({ queryKey: ['admin', 'uploads'] });
+            },
+            onError: (error) => {
+              toast.error(
+                `שגיאה במחיקה: ${error instanceof Error ? error.message : 'לא ידועה'}`,
+                { id: toastId },
+              );
+            },
+          });
         },
       },
       cancel: {
         label: 'ביטול',
-        onClick: () => { setDeleteMode(false); setSelected({}); },
+        onClick: () => {
+          setDeleteMode(false);
+          setSelected({});
+        },
       },
     });
   };
 
-  const handlePickFiles = () => fileInputRef.current?.click();
-
-  const handleFilesChosen = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    const t = toast.loading('מעלה קבצים…');
-    const form = new FormData();
-    Array.from(files).forEach((f) => form.append('files', f));
-    try {
-      const res = await fetch('/api/admin/uploads', {
-        method: 'POST',
-        credentials: 'include',
-        body: form,
-      });
-      const json = await res.json();
-      if (json?.success) {
-        await fetchImages(true);
-        toast.success('הקבצים הועלו בהצלחה', { id: t });
-      } else {
-        toast.error(json?.error || 'שגיאה בהעלאה', { id: t });
-      }
-    } catch {
-      toast.error('שגיאה בהעלאה', { id: t });
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
+  useEffect(() => {
+    if (flagForAddedOrDeletedReview === undefined) return;
+    refetch();
+  }, [flagForAddedOrDeletedReview, refetch]);
 
   useEffect(() => {
-    fetchImages();
-  }, []);
+    setSelected({});
+  }, [images, videos]);
+
+  const renderSkeletons = (keyPrefix: string) =>
+    skeletonPlaceholders.map((_, index) => (
+      <div key={`${keyPrefix}-${index}`} className="flex flex-col gap-3 max-w-[200px] animate-pulse">
+        <div className="w-full aspect-square rounded-lg bg-[#edf3f6]" />
+        <div className="h-3 w-3/4 self-center rounded bg-[#edf3f6]" />
+      </div>
+    ));
 
   return (
     <section className="w-full">
@@ -131,134 +176,111 @@ export function ProjectImages() {
         תמונות בפרויקט
       </h2>
       <div className="grid grid-cols-3 sm:grid-cols-[repeat(auto-fit,minmax(158px,1fr))] min-h-24 gap-2 sm:gap-3 p-4 sm:px-6">
-        {loading && (
-          <div className="col-span-full flex flex-col items-center justify-center py-8">
-            <FiLoader className="w-8 h-8 text-[#13a4ec] animate-spin" />
-            <p className="mt-2 text-[#617c89] text-sm">טוען תמונות…</p>
-          </div>
-        )}
-        {!loading && images.length === 0 && (
-          <div className="col-span-full text-[#617c89] text-sm">אין תמונות להצגה</div>
-        )}
-
-        {images.map((img) => {
-          const isSelected = !!selected[img.filename];
-          return (
-            <div key={img.filename} className="flex flex-col gap-3 max-w-[200px]">
-              <button
-                type="button"
-                className="relative w-full bg-center bg-no-repeat aspect-square bg-cover rounded-lg outline-0 focus:outline-none"
-                style={{ backgroundImage: `url("${img.url}")` }}
-                onClick={() => toggle(img.filename)}
-                aria-pressed={isSelected}
-              >
-                <span
-                  aria-hidden="true"
-                  className={`absolute inset-0 rounded-lg ring-2`}
-                />
-
-                {isSelected && deleteMode && (
-                  <>
-                    <span className="absolute inset-0 rounded-lg overflow-hidden">
-                      <span
-                        className="absolute inset-0 bg-center bg-cover"
-                        style={{
-                          backgroundImage: `url("${img.url}")`,
-                          filter: 'blur(6px)',
-                          transform: 'scale(1.05)',
-                        }}
-                      />
-                      <span className="absolute inset-0 bg-white/30" />
-                    </span>
-                    <span className="absolute inset-0 flex items-center justify-center z-10">
-                      <FiTrash2 className="w-8 h-8 text-[#13a4ec] drop-shadow" />
-                    </span>
-                  </>
-                )}
-              </button>
-              <p className="text-[#617c89] text-xs truncate text-center">{img.filename}</p>
-            </div>
-          );
-        })}
+        {loading
+          ? renderSkeletons('image-skeleton')
+          : images.length === 0
+            ? (
+              <div className="col-span-full text-[#617c89] text-sm">אין תמונות להצגה</div>
+            )
+            : (
+              images.map((image) => {
+                const isSelected = !!selected[image.filename];
+                return (
+                  <div key={image.filename} className="flex flex-col gap-3 max-w-[200px]">
+                    <button
+                      type="button"
+                      className="relative w-full bg-center bg-no-repeat aspect-square bg-cover rounded-lg outline-0 focus:outline-none"
+                      style={{ backgroundImage: `url("${image.url}")` }}
+                      onClick={() => toggle(image.filename)}
+                      aria-pressed={isSelected}
+                    >
+                      <span aria-hidden="true" className="absolute inset-0 rounded-lg ring-2" />
+                      {isSelected && deleteMode && (
+                        <>
+                          <span className="absolute inset-0 rounded-lg overflow-hidden">
+                            <span
+                              className="absolute inset-0 bg-center bg-cover"
+                              style={{
+                                backgroundImage: `url("${image.url}")`,
+                                filter: 'blur(6px)',
+                                transform: 'scale(1.05)',
+                              }}
+                            />
+                            <span className="absolute inset-0 bg-white/30" />
+                          </span>
+                          <span className="absolute inset-0 z-10 flex items-center justify-center">
+                            <FiTrash2 className="w-8 h-8 text-[#13a4ec] drop-shadow" />
+                          </span>
+                        </>
+                      )}
+                    </button>
+                    <p className="text-[#617c89] text-xs truncate text-center">{image.filename}</p>
+                  </div>
+                );
+              })
+            )}
       </div>
-      {/* TODO: add skeltons  */}
+
       <h2 className="text-[#111618] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 sm:px-6 pb-3 pt-2">
         סרטונים בפרויקט
       </h2>
       <div className="grid grid-cols-3 sm:grid-cols-[repeat(auto-fit,minmax(158px,1fr))] min-h-24 gap-2 sm:gap-3 p-4 sm:px-6">
-        {loading && (
-          <div className="col-span-full flex flex-col items-center justify-center py-8">
-            <FiLoader className="w-8 h-8 text-[#13a4ec] animate-spin" />
-            <p className="mt-2 text-[#617c89] text-sm">טוען סרטונים…</p>
-          </div>
-        )}
-        {!loading && videos.length === 0 && (
-          <div className="col-span-full text-[#617c89] text-sm">אין סרטונים להצגה</div>
-        )}
-
-        {videos.map((vid) => {
-          const isSelected = !!selected[vid.filename];
-          return (
-            <div key={vid.filename} className="flex flex-col gap-3 max-w-[200px]">
-              {deleteMode ? (
-                <button
-                  type="button"
-                  className="relative w-full aspect-square rounded-lg outline-0 focus:outline-none overflow-hidden"
-                  onClick={() => toggle(vid.filename)}
-                  aria-pressed={isSelected}
-                >
-                  <video
-                    className="absolute inset-0 w-full h-full object-cover rounded-lg"
-                    src={vid.url}
-                    preload="metadata"
-                    muted
-                    playsInline
-                    style={{ filter: isSelected ? 'blur(6px)' : 'none' }}
-
-                  />
-                  <span
-                    aria-hidden="true"
-                    className={`absolute inset-0 rounded-lg ring-2 ${isSelected ? 'ring-[#13a4ec]' : 'ring-transparent'}`}
-                  />
-
-                  {isSelected && (
-                    <>
-                      <span className="absolute inset-0 rounded-lg bg-white/30" />
-                      <span className="absolute inset-0 flex items-center justify-center z-10">
-                        <FiTrash2 className="w-8 h-8 text-[#13a4ec] drop-shadow" />
-                      </span>
-                    </>
-                  )}
-                </button>
-              ) : (
-                <div className="relative w-full aspect-square rounded-lg overflow-hidden">
-                  <VideoPlayer 
-                    src={vid.url} 
-                    classes="w-full aspect-square rounded-lg overflow-hidden"
-                  />
-                  {/* <MediaPlayer
-                    className="absolute inset-0 w-full h-full object-cover rounded-lg"
-                    src={vid.url}
-                    playsInline
-                    preload="metadata"
-                    dir='ltr'
-                    load="visible"
-                    posterLoad="visible"
-                  >
-                    <MediaProvider />
-                  </MediaPlayer> */}
-                </div>
-              )}
-              <p className="text-[#617c89] text-xs truncate text-center">{vid.filename}</p>
-            </div>
-          );
-        })}
+        {loading
+          ? renderSkeletons('video-skeleton')
+          : videos.length === 0
+            ? (
+              <div className="col-span-full text-[#617c89] text-sm">אין סרטונים להצגה</div>
+            )
+            : (
+              videos.map((video) => {
+                const isSelected = !!selected[video.filename];
+                return (
+                  <div key={video.filename} className="flex flex-col gap-3 max-w-[200px]">
+                    {deleteMode ? (
+                      <button
+                        type="button"
+                        className="relative w-full aspect-square rounded-lg outline-0 focus:outline-none overflow-hidden"
+                        onClick={() => toggle(video.filename)}
+                        aria-pressed={isSelected}
+                      >
+                        <video
+                          className="absolute inset-0 h-full w-full rounded-lg object-cover"
+                          src={video.url}
+                          preload="metadata"
+                          muted
+                          playsInline
+                          style={{ filter: isSelected ? 'blur(6px)' : 'none' }}
+                        />
+                        <span
+                          aria-hidden="true"
+                          className={`absolute inset-0 rounded-lg ring-2 ${isSelected ? 'ring-[#13a4ec]' : 'ring-transparent'}`}
+                        />
+                        {isSelected && (
+                          <>
+                            <span className="absolute inset-0 rounded-lg bg-white/30" />
+                            <span className="absolute inset-0 z-10 flex items-center justify-center">
+                              <FiTrash2 className="w-8 h-8 text-[#13a4ec] drop-shadow" />
+                            </span>
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <VideoPlayer
+                        src={video.url}
+                        classes="w-full aspect-square rounded-lg overflow-hidden"
+                      />
+                    )}
+                    <p className="text-[#617c89] text-xs truncate text-center">{video.filename}</p>
+                  </div>
+                );
+              })
+            )}
       </div>
 
       <div className="px-4 sm:px-6 py-3">
         <div className="rounded-lg border border-[#dbe2e6] bg-[#f8fbfc] p-3">
           <p className="text-[#111618] text-base font-medium leading-normal pb-1">הערות למנהל</p>
-          <ul className="text-[#617c89] text-sm list-disc ps-5 space-y-1">
+          <ul className="ps-5 text-sm text-[#617c89] list-disc space-y-1">
             <li>שם הקובץ favicon.ico יופיע אוטומטית בלשונית התמונות.</li>
             <li>ניתן להעלות תמונות (PNG/JPG/WEBP/GIF/SVG/ICO) או וידאו (MP4/MOV/WEBM/MKV).</li>
             <li>מחיקה תסיר את הקבצים לצמיתות מתיקיית public/.</li>
@@ -269,12 +291,10 @@ export function ProjectImages() {
       <div className="flex px-4 sm:px-6 py-3 gap-3 justify-start">
         <button
           onClick={handlePickFiles}
-          className="flex min-w-[120px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#13a4ec] text-white text-sm font-bold leading-normal tracking-[0.015em]"
+          className="flex min-w-[120px] max-w-[480px] items-center justify-center gap-2 h-10 rounded-lg bg-[#13a4ec] px-4 text-sm font-bold leading-normal text-white tracking-[0.015em]"
         >
-          <span className="truncate flex items-center gap-2">
-            <FiUpload className="w-4 h-4" />
-            העלאת קבצים
-          </span>
+          <FiUpload className="h-4 w-4" />
+          <span className="truncate">העלאת קבצים</span>
         </button>
         <input
           ref={fileInputRef}
@@ -286,7 +306,7 @@ export function ProjectImages() {
         />
         <button
           onClick={deleteSelected}
-          className="flex min-w-[160px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#f0f3f4] text-[#111618] text-sm font-bold leading-normal tracking-[0.015em]"
+          className="flex min-w-[160px] max-w-[480px] items-center justify-center h-10 rounded-lg bg-[#f0f3f4] px-4 text-sm font-bold leading-normal text-[#111618] tracking-[0.015em]"
         >
           <span className="truncate">
             {deleteMode ? `מחק ${selectedList.length} פריטים נבחרים` : 'בחר פריטים למחיקה'}

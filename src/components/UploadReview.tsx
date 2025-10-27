@@ -7,9 +7,9 @@ import { toast } from 'sonner';
 import { FiUpload, FiFileText } from 'react-icons/fi';
 
 type UploadReviewProps = {
-  setFlagForReloadReviews: Dispatch<SetStateAction<boolean>>;
+  setFlagForAddedOrDeletedReview: Dispatch<SetStateAction<boolean>>;
 };
-export default function UploadReview({ setFlagForReloadReviews }: UploadReviewProps) {
+export default function UploadReview({ setFlagForAddedOrDeletedReview }: UploadReviewProps) {
   const {
     register,
     handleSubmit,
@@ -38,7 +38,7 @@ export default function UploadReview({ setFlagForReloadReviews }: UploadReviewPr
       if (!res.ok || !json?.success) throw new Error(json?.error || 'Failed');
       reset();
       toast.success('הביקורת נוספה בהצלחה', { id: t });
-      setFlagForReloadReviews((prev) => !prev);
+      setFlagForAddedOrDeletedReview((prev) => !prev);
     } catch (error) {
       console.error(error);
       toast.error('שגיאה בהוספת הביקורת', { id: t });
