@@ -29,7 +29,7 @@ const Header = () => {
   });
 
   useEffect(() => {
-    refetchReviewsExistence();
+    !pathname.startsWith('/#reviews') && refetchReviewsExistence();
   }, [pathname, refetchReviewsExistence]);
 
   const hasReviews = hasReviewsData ?? null;
@@ -39,30 +39,9 @@ const Header = () => {
     [hasReviews],
   );
 
-  const closeMenu = () => setIsMenuOpen(false);
-
-  const handleNavClick = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
-    if (!href.startsWith('/#')) {
-      closeMenu();
-      return;
-    }
-
-    if (window.location.pathname !== '/') {
-      closeMenu();
-      router.push(href);
-      return;
-    }
-
-    event.preventDefault();
-    const targetId = href.split('#')[1];
-    const target = targetId ? document.getElementById(targetId) : null;
-
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      window.history.replaceState(null, '', href);
-    }
-
-    closeMenu();
+  const closeMenu = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.stopPropagation();
+    setIsMenuOpen(false);
   };
 
   const handleLogout = async () => {
@@ -79,9 +58,21 @@ const Header = () => {
 
   const isAdmin = pathname?.startsWith('/admin/dashboard');
 
+
+  const handleNavClick = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
+    event.stopPropagation();
+
+    if (href !== '/#reviews') return;
+
+    pathname === '/' && event.preventDefault();
+
+    document?.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  };
+
   return (
     <>
-      <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#f0f3f4] px-4 sm:px-6 lg:px-10 py-3 relative z-50 bg-white">
+      <header className="fixed w-full bg-white/80 backdrop-blur-md z-50  flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#f0f3f4] px-4 sm:px-6 lg:px-10 py-3">
         <Link href="/" className="flex items-center gap-4 text-[#111618]">
           <PiDiamondBold className="size-4" />
           <h2 className="text-[#111618] text-base sm:text-lg font-bold leading-tight tracking-[-0.015em]">פתרונות מעליות</h2>
@@ -142,7 +133,7 @@ const Header = () => {
               href={l.href}
               className={`text-[#111618] text-sm font-medium leading-normal ${i < visibleNavLinks.length - 1 ? 'border-b border-solid border-b-[#f0f3f4] pb-3' : ''
                 }`}
-              onClick={(event) => handleNavClick(event, l.href)}
+              onClick={closeMenu}
             >
               {l.label}
             </Link>

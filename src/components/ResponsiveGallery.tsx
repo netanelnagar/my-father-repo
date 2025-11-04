@@ -38,12 +38,12 @@ export function ResponsiveGallery({ images }: ResponsiveGalleryProps) {
                         <Image
                             src={src}
                             alt={alt}
-                            // TODO: read about the fill property
                             fill
                             priority={name === 'primary'}
-                            onLoadingComplete={(img) => {
+                            sizes="(min-width: 1024px) 50vw, (min-width: 768px) 50vw, 100vw"
+                            onLoad={(event) => {
                                 setLoaded((prev) => ({ ...prev, [name]: true }));
-                                img.classList.add('opacity-100');
+                                event.currentTarget.classList.add('opacity-100');
                             }}
                             className="transition-opacity duration-700 opacity-0 object-cover"
                         />

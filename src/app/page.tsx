@@ -28,9 +28,9 @@ const valueHighlights = [
 	{ icon: PiClockFill, label: 'התקנה מהירה' },
 ];
 
-export default async function HomePage() {
+export default function HomePage() {
 	return (
-		<div className="px-4 sm:px-6 lg:px-10 flex flex-1 justify-center py-5">
+		<div className="px-4 sm:px-6 lg:px-10 flex flex-1 justify-center py-7 md:py-5">
 			<div className="layout-content-container flex flex-col w-full max-w-[960px]">
 				<div>
 					<div className="sm:p-4">
@@ -39,6 +39,7 @@ export default async function HomePage() {
 								src="/home-1.png"
 								alt="מעלית ביתית"
 								fill
+								sizes="(min-width: 1024px) 50vw, (min-width: 768px) 50vw, 100vw"
 								priority
 								className="object-cover"
 							/>
@@ -69,6 +70,7 @@ export default async function HomePage() {
 									src={image}
 									alt={alt}
 									fill
+									sizes="(min-width: 1024px) 50vw, (min-width: 768px) 50vw, 100vw"
 									className="object-cover"
 								/>
 							</div>
@@ -97,7 +99,10 @@ export default async function HomePage() {
 					))}
 				</div>
 
-				<h2 className="text-[#111618] text-xl sm:text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">
+				<h2
+					id="reviews"
+					className="text-[#111618] text-xl sm:text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5"
+				>
 					המלצות לקוחות
 				</h2>
 				<Suspense fallback={<ReviewsSkeleton />}>

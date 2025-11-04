@@ -19,6 +19,7 @@
     "motion": "^12.23.24",
     "next": "16.0.1",
     "pg": "^8.16.3",
+    "rate-limiter-flexible": "^8.1.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-fast-marquee": "^1.6.5",

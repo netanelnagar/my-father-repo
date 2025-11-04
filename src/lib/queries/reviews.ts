@@ -8,7 +8,9 @@ export type FetchReviewsResult = {
 const baseUrl = process.env.__NEXT_PRIVATE_ORIGIN ?? '';
 
 export async function fetchReviews(): Promise<FetchReviewsResult> {
-  const response = await fetch(`${baseUrl}/api/reviews`, { next: { tags: ['reviews'] } });
+  const response = await fetch(`${baseUrl}/api/reviews`, { 
+    next: { tags: ['reviews'] }, headers: { 'origin': baseUrl } 
+  });
   
   if (!response.ok) {
     return {

@@ -5,11 +5,13 @@ import Footer from "@/components/Footer";
 import { Toaster } from 'sonner';
 import { QueryProvider } from "@/components/QueryProvider";
 
-// TODO: add seo metadata
 export const metadata: Metadata = {
-  title: "מנופי רמון - מנופים איכותיים לחיי השניך",
+  title: {
+    default: "בית | מנופי רמון",
+    template: "%s | מנופי רמון",
+  },
   description: "מנופי רמון מספקת מנופים איכותיים ואמינים ללקוחות בערב הסעודית. מנופי תקרה ומנופים פנאומטיים עם שירות מקצועי ואמינות גבוהה.",
-  keywords: "מנופים, מנופי תקרה, מנופים פנאומטיים, ערב סעודית, איכות, אמינות",
+  keywords: ["מנופים סעודיים", "מנופי תקרה", "מנופים פנאומטיים", "מנופים לאנשים סעודיים"],
   openGraph: {
     title: "מנופי רמון",
     description: "מנופים איכותיים ואמינים לחיי השניך",
@@ -17,8 +19,8 @@ export const metadata: Metadata = {
     locale: "he_IL",
   }
 };
-
-// TODO: check if need to add some middlewares for protection apis
+// TODO: להטסיף נגישותיות
+// check if need image optimizations
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,7 +34,7 @@ export default function RootLayout({
             className="min-h-dvh overflow-y-auto overflow-x-hidden flex flex-col bg-white"
             style={{ fontFamily: 'Inter, "Noto Sans", sans-serif' }}>
             <Header />
-            <div className="flex-1 flex flex-col ">
+            <div className="flex-1 flex flex-col mt-12 md:mt-10">
               {children}
             </div>
             <Footer />

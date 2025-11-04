@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Metadata } from "next";
 import {
   PiPhone,
   PiRuler,
@@ -147,10 +148,14 @@ const galleryImages: GalleryImage[] = [
 
 const specificationEntries = Object.entries(specifications);
 
+export const metadata: Metadata = {
+  title: "מעלית פנאומטית"
+}
+
 export default function PneumaticCranePage() {
   return (
     <div className="px-4 sm:px-6 lg:px-10 flex flex-1 justify-center py-5">
-      <div className="layout-content-container flex flex-col w-full max-w-[960px]">
+      <div className="flex flex-col w-full max-w-[960px]">
         <div className="flex flex-wrap justify-between gap-3 p-4">
           <div className="flex min-w-72 flex-col gap-3">
             <p className="text-[#111618] tracking-light text-[28px] sm:text-[32px] font-bold leading-tight">מעלית פנאומטית</p>
@@ -166,11 +171,11 @@ export default function PneumaticCranePage() {
         </section>
 
         <section className="p-4" about="video-section">
-            <VideoPlayer
-              src="/1761047054525.mov"
-              classes="relative w-full overflow-hidden rounded-lg aspect-[16/9]"
-              poster="/poster-pneumatic.png"
-            />
+          <VideoPlayer
+            src="/1761047054525.mov"
+            classes="relative w-full overflow-hidden rounded-lg aspect-[16/9]"
+            poster="/poster-pneumatic.png"
+          />
         </section>
 
         <SpecificationsSection title="מפרט טכני" entries={specificationEntries} />

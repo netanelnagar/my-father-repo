@@ -15,6 +15,7 @@ import { PurchaseStepsSection } from '@/components/PurchaseStepsSection';
 import { FaqsSection } from '@/components/FaqsSection';
 import { GalleryImage } from '@/types';
 import { FadeUp } from '@/components/effects/FadeUp';
+import { Metadata } from 'next';
 
 
 const specifications: Record<string, string> = {
@@ -140,6 +141,10 @@ const galleryImages: GalleryImage[] = [
 
 const specificationEntries = Object.entries(specifications);
 
+export const metadata: Metadata = {
+  title: "מנוף תקרה"
+}
+  
 export default function CeilingCranePage() {
   return (
     <div className="px-4 sm:px-6 lg:px-10 flex flex-1 justify-center py-5">
